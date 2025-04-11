@@ -12,7 +12,7 @@
 - **Candidates** apply to jobs, hoping for a response, but often face silence, unclear processes, or missed opportunities.
 
 **Making Interview Easy** solves these problems by providing an intuitive, smart, and scalable platform for both sides of the hiring ecosystem.
-
+0
 ---
 
 ## 🎯 Core Purpose
