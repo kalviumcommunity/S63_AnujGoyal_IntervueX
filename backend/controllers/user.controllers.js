@@ -1,11 +1,11 @@
-import User from "../models/user.model.js";
+import {User} from "../models/user.model.js";
 import bycrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
-    const { name, email, phoneNumber, password, role } = req.body;
-    if (!name || !email || !phoneNumber || !password || !role) {
+    const { fullname, email, phoneNumber, password, role } = req.body;
+    if (!fullname || !email || !phoneNumber || !password || !role) {
       return res.status(400).json({
         message: "Please fill all the fields",
         success: false,
@@ -21,7 +21,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bycrypt.hash(password, 10);
 
     await User.create({
-      fullname: name,
+      fullname,
       email,
       phonenumber: phoneNumber,
       password: hashedPassword,
@@ -99,67 +99,4 @@ export const login = async (req, res) => {
   }
 };
 
-export const logout = async (req, res) => {
-  try {
-    return res.status(200).clearCookie("token", "", { maxAge: 0 }).json({
-      message: "Logged out successfully",
-      success: true,
-    });
-  } catch (error) {
-    console.log(error);
-  }
-};
 
-export const updateProfile = async (req, res) => {
-  try {
-    const { fullname, email, phoneNumber, bio, skills } = req.body;
-    const file = req.file; // resume file
-    // check if all the fields are filled or not
-    if (!fullname || !email || !phoneNumber || !bio || !skills) {
-      return res.status(400).json({
-        message: "Please fill all the fields",
-        success: false,
-      });
-    }
-
-    // cloudinary ayega idhar
-
-    const skillsArray = skills.split(",");
-    const userId = req.id; // middleware authentication
-    let user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(400).json({
-        message: "User not found",
-        success: false,
-      });
-    }
-    // updating data
-    user.fullname = fullname;
-    user.email = email;
-    user.phoneNumber = phoneNumber;
-    user.profile.bio = bio;
-    user.profile.skills = skillsArray;
-
-    // resume comes later here...
-    await user.save();
-
-    user = {
-        _id: user._id,
-        fullname: user.fullname,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        profile: user.profile,
-        };
-
-    return res.status(200).json({
-      message: "Profile updated successfully",
-      success: true,
-      user,
-    });
-
-  } catch (error) {
-    console.log(error);
-  }
-};
