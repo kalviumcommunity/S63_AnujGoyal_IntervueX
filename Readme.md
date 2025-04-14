@@ -65,3 +65,7 @@ The platform provides:
 | 8   | Design and build Landing Page with Navbar                           |
 | 9   | Create static placeholders for dashboards (Candidate/Recruiter)     |
 | 10  | Connect authentication frontend with backend using Axios            |
+
+### DEPLOYMENT LINK
+---
+https://bucolic-sorbet-ea70eb.netlify.app/
