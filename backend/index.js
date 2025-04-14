@@ -4,15 +4,16 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./utils/db.js";
+import userRoutes from "./routes/user.route.js";
 
 // Load environment variables
 dotenv.config();
 
 // Define CORS options
-const corsOptions = {
+const corsOptions = [{
   origin: "http://localhost:5173",
   credentials: true,
-};
+}];
 
 // Create express app
 const app = express();
@@ -23,8 +24,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use("/api/v1/user", userRoutes);
+
 // MongoDB URI and Port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/intervuex";
 
 // Start the server
