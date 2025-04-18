@@ -4,7 +4,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./utils/db.js";
-import userRoutes from "./routes/user.route.js";
+import userRoute from "./routes/user.route.js";
+import companyRoute from "./routes/comany.route.js";
 
 // Load environment variables
 dotenv.config();
@@ -24,7 +25,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/user", userRoute);
+app.use("/api/v1/company", companyRoute);
 
 // MongoDB URI and Port
 const PORT = process.env.PORT || 8000;
