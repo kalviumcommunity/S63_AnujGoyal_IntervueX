@@ -1,13 +1,14 @@
-import "./App.css";
-function App() {
+import  './App.css';
+import Navbar from './components/shared/Navbar';
 
+function App() {
   return (
-    <>
-      <div>
-        <h1 className='text-red-500'>Let's build a job portal</h1>
-      </div>
-    </>
-  )
+    <div className="App">
+      <header className="App-header">
+        <Navbar />
+      </header>
+    </div>
+  );
 }
 
 export default App;
