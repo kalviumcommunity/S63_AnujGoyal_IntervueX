@@ -1,0 +1,15 @@
+meta {
+  name: UpdateStatus
+  type: http
+  seq: 17
+}
+
+post {
+  url: http://localhost:8000/api/v1/application/status/:id/update
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}

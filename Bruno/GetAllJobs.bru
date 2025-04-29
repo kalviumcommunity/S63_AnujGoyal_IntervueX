@@ -1,0 +1,11 @@
+meta {
+  name: GetAllJobs
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:8000/api/v1/job/get
+  body: none
+  auth: inherit
+}

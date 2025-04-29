@@ -1,0 +1,15 @@
+meta {
+  name: GetApplicants
+  type: http
+  seq: 16
+}
+
+get {
+  url: http://localhost:8000/api/v1/application/:id/applicants
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}

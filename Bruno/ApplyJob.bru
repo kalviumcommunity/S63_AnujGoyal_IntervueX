@@ -1,0 +1,15 @@
+meta {
+  name: ApplyJob
+  type: http
+  seq: 14
+}
+
+get {
+  url: http://localhost:8000/api/v1/application/apply/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
