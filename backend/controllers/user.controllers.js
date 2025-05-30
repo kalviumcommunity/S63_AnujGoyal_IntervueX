@@ -5,25 +5,50 @@ import jwt from "jsonwebtoken";
 export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role } = req.body;
+    
+    // Validate required fields
     if (!fullname || !email || !phoneNumber || !password || !role) {
       return res.status(400).json({
         message: "Please fill all the fields",
         success: false,
       });
     }
-    const user = await User.findOne({ email });
-    if (user) {
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return res.status(400).json({
-        message: "User already exist with this email",
+        message: "Please enter a valid email address",
         success: false,
       });
     }
+
+    // Validate phone number format (10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/\D/g, ''))) {
+      return res.status(400).json({
+        message: "Please enter a valid 10-digit phone number",
+        success: false,
+      });
+    }
+
+    // Check if user already exists
+    const user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({
+        message: "User already exists with this email",
+        success: false,
+      });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user with phonenumber field matching the schema
     await User.create({
       fullname,
       email,
-      phonenumber: phoneNumber,
+      phonenumber: phoneNumber.replace(/\D/g, ''), // Store only digits
       password: hashedPassword,
       role,
     });
@@ -33,10 +58,11 @@ export const register = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Registration error:", error);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -81,18 +107,23 @@ export const login = async (req, res) => {
       _id: user._id,
       fullname: user.fullname,
       email: user.email,
-      phoneNumber: user.phoneNumber,
+      phoneNumber: user.phonenumber,
       role: user.role,
       profile: user.profile,
     };
 
+    // Set cookie options based on environment
+    const cookieOptions = {
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/'
+    };
+
     return res
       .status(200)
-      .cookie("token", token, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "strict",
-      })
+      .cookie("token", token, cookieOptions)
       .json({
         message: `Welcome back ${user.fullname}`,
         user: userData,
@@ -100,10 +131,11 @@ export const login = async (req, res) => {
         success: true,
       });
   } catch (error) {
-    console.log(error);
+    console.error("Login error:", error);
     return res.status(500).json({
       message: "Internal server error",
       success: false,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
