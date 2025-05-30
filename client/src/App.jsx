@@ -4,6 +4,7 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Welcome from './components/Welcome';
 import { Toaster } from 'react-hot-toast';
+import Home from './components/Home';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -31,7 +32,7 @@ const App = () => {
 
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Home/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
