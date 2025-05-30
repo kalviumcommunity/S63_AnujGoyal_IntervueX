@@ -1,14 +1,38 @@
 import express from "express";
-import {login,register, updateProfile, logout } from "../controllers/user.controllers.js";
+import {login, register, updateProfile, logout } from "../controllers/user.controllers.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
-import upload from "../utils/multer.js";
+import { passport } from "../utils/passport.js";
 
 const router = express.Router();
 
-router.route("/register").post(upload.single('file'), register);
+// Basic authentication routes
+router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/logout").get(logout);
-router.route("/profile/update").put(isAuthenticated, upload.single('file'), updateProfile);
+router.route("/profile/update").put(isAuthenticated, updateProfile);
+
+// Social authentication routes - only add if credentials are configured
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+  router.get("/auth/google/callback", 
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req, res) => {
+      const token = req.user.token;
+      res.redirect(`${process.env.CLIENT_URL}?token=${token}`);
+    }
+  );
+}
+
+if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
+  router.get("/auth/linkedin", passport.authenticate("linkedin"));
+  router.get("/auth/linkedin/callback", 
+    passport.authenticate("linkedin", { failureRedirect: "/login" }),
+    (req, res) => {
+      const token = req.user.token;
+      res.redirect(`${process.env.CLIENT_URL}?token=${token}`);
+    }
+  );
+}
 
 export default router;
 
