@@ -10,9 +10,14 @@ import userRoute from "./routes/user.route.js";
 import companyRoute from "./routes/comany.route.js";
 import jobRoute from "./routes/job.route.js";
 import applicationRoute from "./routes/application.route.js";
+import atsRoute from "./routes/ats.route.js";
 
-// Load environment variables
-dotenv.config();
+// Load environment variables - Try .env first, fallback to .env~
+dotenv.config({ path: './.env' });
+if (!process.env.MONGO_URI) {
+  console.log('Loading from .env~ file...');
+  dotenv.config({ path: './.env~' });
+}
 
 // Define CORS options
 const corsOptions = {
@@ -46,13 +51,14 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);
 app.use("/api/v1/application", applicationRoute);
+app.use("/api/v1/ats", atsRoute);
 
 // MongoDB URI and Port
 const PORT = process.env.PORT || 8000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/intervuex";
 
 // Start the server
 app.listen(PORT, () => {
-  connectDB();
   console.log(`Server is running on port http://localhost:${PORT}`);
+  console.log(`MongoDB URI: ${process.env.MONGO_URI}`);
+  connectDB();
 });
