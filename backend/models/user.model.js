@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
     role:{
         type:String,
         enum:["student","recruiter"],
-        default:"user",
+        default:"student",
     },
     profile:{
         bio:{type:String,},

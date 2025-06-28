@@ -4,7 +4,8 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Welcome from './Pages/Welcome';
 import Profile from './Pages/Profile';
-import { Toaster } from 'react-hot-toast';
+import ATSChecker from './Pages/ATSChecker';
+import { Toaster } from 'sonner';
 import Home from './Pages/Home';
 
 // Protected Route Component
@@ -20,15 +21,9 @@ const App = () => {
   return (
     <BrowserRouter>
       {/* Toast Container */}
-      <Toaster
+      <Toaster 
         position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-        }}
+        richColors
       />
 
       <Routes>
@@ -51,6 +46,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ats-checker"
+          element={
+            <ProtectedRoute>
+              <ATSChecker />
             </ProtectedRoute>
           }
         />

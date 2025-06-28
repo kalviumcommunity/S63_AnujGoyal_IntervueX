@@ -4,3 +4,4 @@ PORT=8000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 SESSION_SECRET=intervuex-session-secret-2024
+GEMINI_API_KEY=AIzaSyD0pZilC4ZpEGf6Im3FRbvybqfeoygb3jM
