@@ -9,6 +9,8 @@ import { Toaster } from 'sonner';
 import Home from './Pages/Home';
 import Contact from './Pages/Contact';
 import About from './Pages/About';
+import Jobs from './Pages/Jobs';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -34,6 +36,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/jobs" element={<Jobs />} />
         {/* Protected Routes */}
         <Route
           path="/welcome"
