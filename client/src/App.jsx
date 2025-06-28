@@ -7,7 +7,8 @@ import Profile from './Pages/Profile';
 import ATSChecker from './Pages/ATSChecker';
 import { Toaster } from 'sonner';
 import Home from './Pages/Home';
-
+import Contact from './Pages/Contact';
+import About from './Pages/About';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -32,7 +33,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/contact" element={<Contact />} />
-        
+        <Route path="/about" element={<About />} />
         {/* Protected Routes */}
         <Route
           path="/welcome"
