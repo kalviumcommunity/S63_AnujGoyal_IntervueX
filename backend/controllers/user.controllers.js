@@ -1,6 +1,8 @@
 import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
 
 export const register = async (req, res) => {
   try {
@@ -161,7 +163,7 @@ export const updateProfile = async (req, res) => {
     
     let skillsArray;
     if(skills) {
-      skillsArray = skills.split(",");
+      skillsArray = skills.split(",").map(skill => skill.trim());
     }
     
     const userId = req.id; // middleware authentication
@@ -174,12 +176,27 @@ export const updateProfile = async (req, res) => {
       });
     }
     
+    // Handle file upload for resume
+    if (req.file) {
+      // Delete old resume file if exists
+      if (user.profile?.resume) {
+        const oldFilePath = path.join(process.cwd(), user.profile.resume);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
+      
+      // Save new resume file path and original name
+      user.profile.resume = req.file.path;
+      user.profile.resumeOrignalName = req.file.originalname;
+    }
+    
     // updating data
     if(fullname) user.fullname = fullname;
     if(email) user.email = email;
     if(phoneNumber) user.phonenumber = phoneNumber;
     if(bio) user.profile.bio = bio;
-    if(skills) user.profile.skills = skillsArray;
+    if(skillsArray) user.profile.skills = skillsArray;
     
     await user.save();
 
@@ -187,7 +204,7 @@ export const updateProfile = async (req, res) => {
       _id: user._id,
       fullname: user.fullname,
       email: user.email,
-      phoneNumber: user.phoneNumber,
+      phoneNumber: user.phonenumber,
       role: user.role,
       profile: user.profile
     };
@@ -197,6 +214,105 @@ export const updateProfile = async (req, res) => {
       user: userData,
       success: true
     });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// Dedicated function for resume upload
+export const uploadResume = async (req, res) => {
+  try {
+    const userId = req.id;
+    
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Please select a resume file to upload.",
+        success: false
+      });
+    }
+
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found.",
+        success: false
+      });
+    }
+
+    // Delete old resume file if exists
+    if (user.profile?.resume) {
+      const oldFilePath = path.join(process.cwd(), user.profile.resume);
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
+    // Update user with new resume information
+    user.profile.resume = req.file.path;
+    user.profile.resumeOrignalName = req.file.originalname;
+    
+    await user.save();
+
+    const userData = {
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phoneNumber: user.phonenumber,
+      role: user.role,
+      profile: user.profile
+    };
+
+    return res.status(200).json({
+      message: "Resume uploaded successfully.",
+      user: userData,
+      success: true
+    });
+  } catch (error) {
+    // If there was an error and file was uploaded, delete it
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+// Download resume function
+export const downloadResume = async (req, res) => {
+  try {
+    const userId = req.id;
+    const user = await User.findById(userId);
+    
+    if (!user || !user.profile?.resume) {
+      return res.status(404).json({
+        message: "Resume not found.",
+        success: false
+      });
+    }
+
+    const filePath = path.join(process.cwd(), user.profile.resume);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        message: "Resume file not found on server.",
+        success: false
+      });
+    }
+
+    // Set appropriate headers for file download
+    res.setHeader('Content-Disposition', `attachment; filename="${user.profile.resumeOrignalName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Send file
+    res.sendFile(path.resolve(filePath));
   } catch (error) {
     console.log(error);
     return res.status(500).json({
