@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, FaEnvelope, FaPhone, FaTimes, FaEdit, FaMapMarkerAlt, 
@@ -6,17 +6,22 @@ import {
   FaCalendarAlt, FaFileAlt, FaPlus, FaTimes as FaTimesCircle,
   FaBriefcase, FaBuilding, FaTrash, FaLock, FaMedal, FaHistory,
   FaBookmark, FaUpload, FaSignOutAlt, FaBars, FaRegBookmark,
-  FaClipboardList
+  FaClipboardList, FaDownload, FaSpinner, FaCheck
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [user, setUser] = useState(null);
   const [activeSection, setActiveSection] = useState('profile');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
   const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [skills, setSkills] = useState(['React', 'JavaScript', 'Node.js', 'MongoDB', 'Express.js', 'TypeScript']);
   const [profileData, setProfileData] = useState({
     university: 'Example University',
@@ -36,6 +41,9 @@ const Profile = () => {
     ]
   });
 
+  // API Base URL
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
   useEffect(() => {
     // Check for authentication
     const token = localStorage.getItem('token');
@@ -49,6 +57,11 @@ const Profile = () => {
     try {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
+      
+      // Set skills from user profile if available
+      if (parsedUser.profile?.skills && parsedUser.profile.skills.length > 0) {
+        setSkills(parsedUser.profile.skills);
+      }
     } catch (error) {
       console.error('Error parsing user data:', error);
       navigate('/login');
@@ -62,6 +75,106 @@ const Profile = () => {
   const confirmLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  // Handle file selection
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      handleResumeUpload(file);
+    }
+  };
+
+  // Upload resume function
+  const handleResumeUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload only PDF, DOC, or DOCX files');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size should be less than 5MB');
+      return;
+    }
+
+    setIsUploadingResume(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/user/resume/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        // Update user data in localStorage and state
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        toast.success('Resume uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Resume upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload resume');
+    } finally {
+      setIsUploadingResume(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Download resume function
+  const handleResumeDownload = async () => {
+    if (!user?.profile?.resume) {
+      toast.error('No resume found to download');
+      return;
+    }
+
+    setIsDownloadingResume(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/user/resume/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        responseType: 'blob'
+      });
+
+      // Create blob and download
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = user.profile.resumeOrignalName || 'resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Resume downloaded successfully!');
+    } catch (error) {
+      console.error('Resume download error:', error);
+      toast.error(error.response?.data?.message || 'Failed to download resume');
+    } finally {
+      setIsDownloadingResume(false);
+    }
+  };
+
+  // Trigger file input
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const sidebarLinks = [
@@ -163,15 +276,79 @@ const Profile = () => {
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4">Resume & Links</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-gray-700">
-              <FaFileAlt className="text-blue-500" />
-              <span>Resume</span>
+          {/* Resume Upload Section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className="text-center">
+              {user?.profile?.resume ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center space-x-2 text-green-600">
+                    <FaCheck className="text-xl" />
+                    <span className="font-medium">Resume Uploaded</span>
+                  </div>
+                  <div className="text-gray-600">
+                    <FaFileAlt className="text-3xl mx-auto mb-2" />
+                    <p className="text-sm">{user.profile.resumeOrignalName}</p>
+                  </div>
+                  <div className="flex justify-center space-x-4">
+                    <button
+                      onClick={handleResumeDownload}
+                      disabled={isDownloadingResume}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 flex items-center space-x-2"
+                    >
+                      {isDownloadingResume ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaDownload />
+                      )}
+                      <span>{isDownloadingResume ? 'Downloading...' : 'Download'}</span>
+                    </button>
+                    <button
+                      onClick={triggerFileInput}
+                      disabled={isUploadingResume}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 flex items-center space-x-2"
+                    >
+                      {isUploadingResume ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaUpload />
+                      )}
+                      <span>{isUploadingResume ? 'Uploading...' : 'Replace Resume'}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <FaFileAlt className="text-6xl text-gray-400 mx-auto" />
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">Upload Your Resume</h4>
+                    <p className="text-gray-600 mb-4">Upload your resume in PDF, DOC, or DOCX format (Max 5MB)</p>
+                    <button
+                      onClick={triggerFileInput}
+                      disabled={isUploadingResume}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center space-x-2 mx-auto"
+                    >
+                      {isUploadingResume ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaUpload />
+                      )}
+                      <span>{isUploadingResume ? 'Uploading...' : 'Choose File'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-              Upload Resume
-            </button>
           </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
           <div className="space-y-3">
             <a 
               href={profileData.github}
