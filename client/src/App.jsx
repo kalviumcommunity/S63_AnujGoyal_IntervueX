@@ -2,9 +2,10 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
-import Welcome from './components/Welcome';
+import Welcome from './Pages/Welcome';
+import Profile from './Pages/Profile';
 import { Toaster } from 'react-hot-toast';
-import Home from './components/Home';
+import Home from './Pages/Home';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -42,6 +43,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Welcome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />
